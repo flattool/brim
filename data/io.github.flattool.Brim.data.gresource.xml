@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<gresources>
+	<gresource prefix="/io/github/flattool/Brim">
+		<file
+			preprocess="xml-stripblanks"
+			alias="appdata"
+		>io.github.flattool.Brim.metainfo.xml</file>
+	</gresource>
+</gresources>

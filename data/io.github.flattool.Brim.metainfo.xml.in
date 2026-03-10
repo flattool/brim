@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>io.github.flattool.Brim</id>
+	<launchable type="desktop-id">io.github.flattool.Brim.desktop</launchable>
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-3.0-or-later</project_license>
+	<translation type="gettext">brim</translation>
+	<content_rating type="oars-1.1" />
+
+	<developer id="tld.vendor">
+		<name>Heliguy</name>
+	</developer>
+
+	<name>brim</name>
+	<summary>Flattool template default summary</summary>
+	<description>
+		<p>Flattool template default description</p>
+	</description>
+
+	<url type="homepage">https://github.com/flattool/brim.git</url>
+	<url type="vcs-browser">https://github.com/flattool/brim.git</url>
+	<url type="bugtracker">https://github.com/flattool/brim.git/issues</url>
+	<url type="donation">https://ko-fi.com/heliguy</url>
+	<url type="contribute">https://github.com/flattool/brim.git</url>
+
+	<branding>
+		<color type="primary" scheme_preference="light">#ffffff</color>
+		<color type="primary" scheme_preference="dark">#000000</color>
+	</branding>
+
+	<!-- <screenshots>
+		<screenshot type="default">
+			<image>https://some_url.com/an_image.png</image>
+			<caption>Flattool template default screenshot caption.</caption>
+		</screenshot>
+	</screenshots> -->
+
+	<releases>
+		<release version="0.0.1" date="2026-03-10">
+			<description translate="no">
+				<p>Initial Release</p>
+			</description>
+		</release>
+	</releases>
+</component>

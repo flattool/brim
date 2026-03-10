@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Brim
+Comment=Flattool app template
+Exec=io.github.flattool.Brim
+Icon=io.github.flattool.Brim
+Terminal=false
+Type=Application
+Categories=Development
+Keywords=
+StartupNotify=true
+DBusActivatable=true
