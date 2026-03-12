@@ -6,6 +6,8 @@ import Adw from "gi://Adw?version=1"
 import { GClass, SimpleAction, OnSimpleAction, from, dedent } from "./gobjectify/gobjectify.js"
 import { MainWindow } from "./window/main_window.js"
 
+import "./mixins.js"
+
 @GClass({ manual_gtype_name: "Gjs_Application" })
 export class Application extends from(Adw.Application, {
 	_quit: SimpleAction({ accels: ["<primary>q"] }),

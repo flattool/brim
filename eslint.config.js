@@ -11,7 +11,7 @@ const sharedJsTsRules = {
 	"@stylistic/array-bracket-spacing": ["error", "never"],
 	"@stylistic/array-element-newline": ["error", { consistent: true, multiline: true }],
 	"@stylistic/arrow-parens": ["error", "always"],
-	"@stylistic/arrow-spacing": ["error", { before: true, after: true }],
+	// "@stylistic/arrow-spacing": ["error", { before: true, after: true }],
 	"@stylistic/block-spacing": ["error", "always"],
 	"@stylistic/brace-style": ["error", "1tbs", { allowSingleLine: true }],
 	"@stylistic/comma-dangle": ["error", "always-multiline"],
@@ -173,7 +173,7 @@ export default defineConfig([
 			"jsonc/object-property-newline": "error",
 		},
 	},
-    {
+	{
 		// Allow comments in TSConfig
 		files: ["**tsconfig.json"],
 		languageOptions: {

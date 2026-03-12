@@ -1,25 +1,198 @@
 using Gtk 4.0;
 using Adw 1;
 
+FilterListModel filtered_packages {
+	filter: StringFilter {
+		search: bind template.search_text;
+		expression: expr item as <$Package>.name;
+	};
+
+	model: $ListStore packages {};
+}
+
 template $MainWindow: Adw.ApplicationWindow {
 	title: _("Brim");
 
-	content: Adw.ToolbarView toolbar_view {
-		[top]
-		Adw.HeaderBar header_bar {
-			[end]
-			MenuButton {
-				primary: true;
-				icon-name: "open-menu-symbolic";
-				tooltip-text: _("Main Menu");
-				menu-model: primary_menu;
-			}
-		}
+	default-width: 1135;
+	default-height: 635;
 
-		content: Adw.StatusPage status_page {
-			icon-name: "io.github.flattool.Brim";
-			title: bind template.title;
-			description: _("Flattool template default description");
+	content: Adw.ToastOverlay toast_overlay {
+		child: Adw.OverlaySplitView {
+			sidebar-position: end;
+			max-sidebar-width: 900;
+
+			content: Adw.ToolbarView toolbar_view {
+				[top]
+				Adw.HeaderBar header_bar {
+					[start]
+					ToggleButton search_button {
+						icon-name: "system-search-symbolic";
+						tooltip-text: _("Search Packages");
+					}
+
+					[start]
+					Image {
+						margin-start: 6;
+						visible: bind $_show_spinner(template.is_loading, sort_model.pending) as <bool>;
+
+						accessibility {
+							label: _("Loading…");
+						}
+
+						paintable: Adw.SpinnerPaintable {
+							widget: template;
+						};
+					}
+
+					[end]
+					MenuButton {
+						primary: true;
+						icon-name: "open-menu-symbolic";
+						tooltip-text: _("Main Menu");
+						menu-model: primary_menu;
+					}
+				}
+
+				[top]
+				SearchBar {
+					search-mode-enabled: bind search_button.active bidirectional;
+					key-capture-widget: template;
+
+					child: SearchEntry {
+						placeholder-text: _("Search packages");
+						hexpand: true;
+						search-changed => $_on_search_changed();
+					};
+				}
+
+				content: ScrolledWindow {
+					child: ColumnView column_view {
+						styles [
+							"styled-list",
+						]
+
+						model: SingleSelection selection_model {
+							model: SortListModel sort_model {
+								model: filtered_packages;
+								incremental: true;
+								sorter: bind column_view.sorter;
+							};
+						};
+
+						ColumnViewColumn name_column {
+							title: _("Name");
+							expand: true;
+
+							factory: BuilderListItemFactory {
+								template ListItem {
+									child: Inscription {
+										text: bind template.item as <$Package>.name;
+										text-overflow: ellipsize_middle;
+										min-chars: 10;
+										nat-chars: 30;
+										hexpand: true;
+										margin-top: 4;
+										margin-bottom: 4;
+									};
+								}
+							};
+
+							sorter: StringSorter {
+								expression: expr item as <$Package>.name;
+							};
+						}
+
+						ColumnViewColumn version_column {
+							title: _("Version");
+
+							factory: BuilderListItemFactory {
+								template ListItem {
+									child: Inscription {
+										text: bind template.item as <$Package>.version;
+										text-overflow: ellipsize_end;
+										min-chars: 10;
+										nat-chars: 15;
+									};
+								}
+							};
+
+							sorter: StringSorter {
+								expression: expr item as <$Package>.version;
+							};
+						}
+
+						ColumnViewColumn arch_column {
+							title: _("Arch");
+
+							factory: BuilderListItemFactory {
+								template ListItem {
+									child: Inscription {
+										text: bind template.item as <$Package>.arch;
+										text-overflow: ellipsize_end;
+										min-chars: 6;
+										nat-chars: 10;
+									};
+								}
+							};
+
+							sorter: StringSorter {
+								expression: expr item as <$Package>.arch;
+							};
+						}
+
+						ColumnViewColumn repo_column {
+							title: _("Repo");
+
+							factory: BuilderListItemFactory {
+								template ListItem {
+									child: Inscription {
+										text: bind template.item as <$Package>.repo_id;
+										text-overflow: ellipsize_end;
+										min-chars: 10;
+										nat-chars: 15;
+									};
+								}
+							};
+
+							sorter: StringSorter {
+								expression: expr item as <$Package>.repo_id;
+							};
+						}
+
+						ColumnViewColumn installed_column {
+							title: _("Installed");
+
+							factory: BuilderListItemFactory {
+								template ListItem {
+									child: Image {
+										icon-name: "object-select-symbolic";
+										visible: bind template.item as <$Package>.installed;
+									};
+								}
+							};
+
+							sorter: NumericSorter {
+								expression: expr item as <$Package>.installed;
+								sort-order: descending;
+							};
+						}
+					};
+				};
+			};
+
+			sidebar: Adw.NavigationPage {
+				title: _("Package Details");
+
+				child: Adw.ToolbarView {
+					[top]
+					Adw.HeaderBar {}
+
+					content: Adw.StatusPage {
+						title: bind selection_model.selected-item as <$Package>.name;
+						description: bind selection_model.selected-item as <$Package>.version;
+					};
+				};
+			};
 		};
 	};
 }

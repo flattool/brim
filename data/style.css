@@ -1,0 +1,36 @@
+.styled-list {
+	background-color: rgba(0, 0, 0, 0);
+	padding-left: 24px;
+	padding-right: 24px;
+}
+
+.styled-list > listview {
+	padding-top: 16px;
+	padding-bottom: 24px;
+	margin-left: -24px;
+	margin-right: -24px;
+	border-spacing: 8px;
+}
+
+.styled-list > listview > row {
+	margin-left: 24px;
+	margin-right: 24px;
+	border-radius: 11px;
+}
+
+/* .styled-list row {
+	border-radius: 11px;
+	margin: 3px 0px 3px 0px;
+}
+
+.styled-list row:last-child {
+	margin-bottom: 15px;
+} */
+
+.styled-list button:first-child {
+	border-radius: 9px 0px 0px 0px;
+}
+
+.styled-list button:last-child {
+	border-radius: 0px 9px 0px 0px;
+}
