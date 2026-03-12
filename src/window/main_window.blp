@@ -146,7 +146,7 @@ template $MainWindow: Adw.ApplicationWindow {
 							factory: BuilderListItemFactory {
 								template ListItem {
 									child: Inscription {
-										text: bind template.item as <$Package>.repo_id;
+										text: bind template.item as <$Package>.repoid;
 										text-overflow: ellipsize_end;
 										min-chars: 10;
 										nat-chars: 15;
@@ -155,7 +155,7 @@ template $MainWindow: Adw.ApplicationWindow {
 							};
 
 							sorter: StringSorter {
-								expression: expr item as <$Package>.repo_id;
+								expression: expr item as <$Package>.repoid;
 							};
 						}
 
@@ -180,18 +180,8 @@ template $MainWindow: Adw.ApplicationWindow {
 				};
 			};
 
-			sidebar: Adw.NavigationPage {
-				title: _("Package Details");
-
-				child: Adw.ToolbarView {
-					[top]
-					Adw.HeaderBar {}
-
-					content: Adw.StatusPage {
-						title: bind selection_model.selected-item as <$Package>.name;
-						description: bind selection_model.selected-item as <$Package>.version;
-					};
-				};
+			sidebar: $DetailsPane details_pane {
+				pkg: bind selection_model.selected-item;
 			};
 		};
 	};

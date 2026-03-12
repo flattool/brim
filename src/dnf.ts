@@ -54,12 +54,13 @@ const package_spec = string_format_spec(
 	"name",
 	"version",
 	"arch",
-	"repo_id",
+	"repoid",
 )
 
 const INSTALLED_PACKAGE_QUERY = [
 	"dnf5",
 	"repoquery",
+	"--quiet",
 	"--installed",
 	"--latest-limit=1",
 	"--queryformat",
@@ -70,6 +71,7 @@ const INSTALLED_PACKAGE_QUERY = [
 const AVAILABLE_PACKAGE_QUERY = [
 	"dnf5",
 	"repoquery",
+	"--quiet",
 	"--available",
 	"--latest-limit=1",
 	"--queryformat",
@@ -83,7 +85,7 @@ export class Package extends from(GObject.Object, {
 	name: Property.string({ flags: "CONSTRUCT_ONLY" }),
 	version: Property.string({ flags: "CONSTRUCT_ONLY" }),
 	arch: Property.string({ flags: "CONSTRUCT_ONLY" }),
-	repo_id: Property.string({ flags: "CONSTRUCT_ONLY" }),
+	repoid: Property.string({ flags: "CONSTRUCT_ONLY" }),
 	upgradable_to: Property.string(),
 	installed: Property.bool(),
 }) {

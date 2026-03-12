@@ -8,6 +8,8 @@ import { SharedVars } from "../utils/shared_vars.js"
 import { Package } from "../dnf.js"
 import { ListStore } from "../list_store.js"
 
+import "../details_pane/details_pane.js"
+
 @GClass({ template: "resource:///io/github/flattool/Brim/window/main_window.ui" })
 export class MainWindow extends from(Adw.ApplicationWindow, {
 	search_text: Property.string(),
