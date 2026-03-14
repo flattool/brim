@@ -4,8 +4,8 @@ import { GClass, Property, from, Debounce } from "../gobjectify/gobjectify.js"
 import { Package } from "../dnf.js"
 import { LineProcess } from "../cli.js"
 
-@GClass({ template: "resource:///io/github/flattool/Brim/details_pane/details_pane.ui" })
-export class DetailsPane extends from(Adw.NavigationPage, {
+@GClass({ template: "resource:///io/github/flattool/Brim/details_page/details_page.ui" })
+export class DetailsPage extends from(Adw.NavigationPage, {
 	pkg: Property.gobject(Package),
 	summary: Property.string(),
 }) {

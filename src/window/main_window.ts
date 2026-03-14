@@ -9,7 +9,7 @@ import { Package } from "../dnf.js"
 import { ListStore } from "../list_store.js"
 import { chunked_idler } from "../utils/helper_funcs.js"
 
-import "../details_pane/details_pane.js"
+import "../details_page/details_page.js"
 
 @GClass({ template: "resource:///io/github/flattool/Brim/window/main_window.ui" })
 export class MainWindow extends from(Adw.ApplicationWindow, {
@@ -66,16 +66,22 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 		print("=====================")
 	}
 
+	#selection_changed_token?: {}
+
 	protected async _on_selection_changed(selection_model: Gtk.MultiSelection<Package>): Promise<void> {
 		const bitset = this._selection_model.get_selection()
 		const selected: Package[] = []
+		const token = {}
+		this.#selection_changed_token = token
 		const idler = chunked_idler()
 		for (let nth = 0; nth < bitset.get_size(); nth += 1) {
 			const position = bitset.get_nth(nth)
 			const item = selection_model.get_item(position)!
 			selected.push(item)
 			await idler()
+			if (this.#selection_changed_token !== token) return
 		}
+		if (this.#selection_changed_token !== token) return
 		this._selected_packages.swap_contents(selected)
 	}
 

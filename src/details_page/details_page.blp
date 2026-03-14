@@ -1,7 +1,7 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $DetailsPane: Adw.NavigationPage {
+template $DetailsPage: Adw.NavigationPage {
 	title: _("Details");
 
 	notify::pkg => $_on_pkg_changed();
