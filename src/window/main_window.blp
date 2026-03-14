@@ -1,13 +1,17 @@
 using Gtk 4.0;
 using Adw 1;
 
+$ListStore packages {}
+
+$ListStore selected_packages {}
+
 FilterListModel filtered_packages {
 	filter: StringFilter {
 		search: bind template.search_text;
 		expression: expr item as <$Package>.name;
 	};
 
-	model: $ListStore packages {};
+	model: packages;
 }
 
 template $MainWindow: Adw.ApplicationWindow {
@@ -67,17 +71,21 @@ template $MainWindow: Adw.ApplicationWindow {
 
 				content: ScrolledWindow {
 					child: ColumnView column_view {
-						styles [
-							"styled-list",
-						]
+						enable-rubberband: true;
 
-						model: SingleSelection selection_model {
+						model: MultiSelection selection_model {
 							model: SortListModel sort_model {
 								model: filtered_packages;
 								incremental: true;
 								sorter: bind column_view.sorter;
 							};
+
+							selection-changed => $_on_selection_changed();
 						};
+
+						styles [
+							"styled-list",
+						]
 
 						ColumnViewColumn name_column {
 							title: _("Name");
@@ -165,7 +173,7 @@ template $MainWindow: Adw.ApplicationWindow {
 							factory: BuilderListItemFactory {
 								template ListItem {
 									child: Image {
-										icon-name: "object-select-symbolic";
+										icon-name: "archive-symbolic";
 										visible: bind template.item as <$Package>.installed;
 									};
 								}
@@ -181,7 +189,7 @@ template $MainWindow: Adw.ApplicationWindow {
 			};
 
 			sidebar: $DetailsPane details_pane {
-				pkg: bind selection_model.selected-item;
+				// pkg: bind selection_model.selected-item;
 			};
 		};
 	};

@@ -3,10 +3,11 @@ import Gtk from "gi://Gtk?version=4.0"
 import Adw from "gi://Adw?version=1"
 import Pango from "gi://Pango?version=1.0"
 
-import { GClass, Property, Child, from } from "../gobjectify/gobjectify.js"
+import { GClass, Property, Child, from, Debounce } from "../gobjectify/gobjectify.js"
 import { SharedVars } from "../utils/shared_vars.js"
 import { Package } from "../dnf.js"
 import { ListStore } from "../list_store.js"
+import { chunked_idler } from "../utils/helper_funcs.js"
 
 import "../details_pane/details_pane.js"
 
@@ -14,9 +15,10 @@ import "../details_pane/details_pane.js"
 export class MainWindow extends from(Adw.ApplicationWindow, {
 	search_text: Property.string(),
 	is_loading: Property.bool({ default: true }),
-	// _packages: Child<Gio.ListStore<Package>>(),
 	_packages: Child<ListStore<Package>>(),
+	_selected_packages: Child<ListStore<Package>>(),
 	_column_view: Child<Gtk.ColumnView>(),
+	_selection_model: Child<Gtk.MultiSelection>(),
 	_name_column: Child<Gtk.ColumnViewColumn>(),
 	_installed_column: Child<Gtk.ColumnViewColumn>(),
 	_toast_overlay: Child<Adw.ToastOverlay>(),
@@ -28,6 +30,8 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 		print(`Welcome to ${pkg.app_id}!`)
 
 		this.connect("close-request", () => this._column_view.set_model(null))
+		this._selected_packages.connect("items-changed", () => print(this._selected_packages.length))
+
 		this._column_view.sort_by_column(this._installed_column, Gtk.SortType.ASCENDING)
 		await Package.load_packages(this._packages)
 		this.is_loading = false
@@ -60,6 +64,19 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 		print(title)
 		print(message)
 		print("=====================")
+	}
+
+	protected async _on_selection_changed(selection_model: Gtk.MultiSelection<Package>): Promise<void> {
+		const bitset = this._selection_model.get_selection()
+		const selected: Package[] = []
+		const idler = chunked_idler()
+		for (let nth = 0; nth < bitset.get_size(); nth += 1) {
+			const position = bitset.get_nth(nth)
+			const item = selection_model.get_item(position)!
+			selected.push(item)
+			await idler()
+		}
+		this._selected_packages.swap_contents(selected)
 	}
 
 	protected _on_search_changed(entry: Gtk.SearchEntry): void {

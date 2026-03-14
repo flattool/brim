@@ -11,6 +11,10 @@ export class ListStore<T extends GObject.Object> extends from(
 ) implements Gio.ListModel.Interface {
 	#items: T[] = []
 
+	get length(): number {
+		return this.#items.length
+	}
+
 	append(item: T): void {
 		this.#items.push(item)
 		this.with_implements.items_changed(this.#items.length - 1, 0, 1)
@@ -42,7 +46,7 @@ export class ListStore<T extends GObject.Object> extends from(
 	}
 
 	vfunc_get_n_items(): number {
-		return this.#items.length
+		return this.length
 	}
 
 	vfunc_get_item(position: number): GObject.Object | null {
