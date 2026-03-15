@@ -7,12 +7,11 @@ import { GClass, SimpleAction, Property, Child, from, OnSimpleAction } from "../
 import { SharedVars } from "../utils/shared_vars.js"
 import { Package } from "../dnf.js"
 import { ListStore } from "../list_store.js"
+import { make_signal_factory } from "../utils/helper_funcs.js"
 
 import "../details_page/details_page.js"
 import GObject from "gi://GObject?version=2.0"
 import GLib from "gi://GLib?version=2.0"
-
-GLib.Variant.new_uint32
 
 @GClass({ template: "resource:///io/github/flattool/Brim/window/main_window.ui" })
 export class MainWindow extends from(Adw.ApplicationWindow, {
@@ -22,7 +21,12 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 	_packages: Child<ListStore<Package>>(),
 	_column_view: Child<Gtk.ColumnView>(),
 	_selection_model: Child<Gtk.MultiSelection<Package>>(),
+
+	_selected_column: Child<Gtk.ColumnViewColumn>(),
 	_name_column: Child<Gtk.ColumnViewColumn>(),
+	_version_column: Child<Gtk.ColumnViewColumn>(),
+	_arch_column: Child<Gtk.ColumnViewColumn>(),
+	_repo_column: Child<Gtk.ColumnViewColumn>(),
 	_installed_column: Child<Gtk.ColumnViewColumn>(),
 	_toast_overlay: Child<Adw.ToastOverlay>(),
 }) {
@@ -34,11 +38,89 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 		if (pkg.profile === "development") this.add_css_class("devel")
 		print(`Welcome to ${pkg.app_id}!`)
 
-		this.connect("close-request", () => {
-			this._packages.remove_all()
-			this._name_column.set_factory(null)
+		this.connect("unrealize", () => {
 			this._column_view.set_model(null)
+			const columns = this._column_view.get_columns()
+			while (true) {
+				const column = columns.get_item(0) as Gtk.ColumnViewColumn | null
+				if (!column) break
+				column.set_factory(null)
+				this._column_view.remove_column(column)
+			}
 		})
+
+		this._selected_column.set_factory(make_signal_factory(Gtk.CheckButton, Package, {
+			setup: (list_item) => {
+				const check = new Gtk.CheckButton({ valign: Gtk.Align.CENTER })
+				const handler_id = check.connect("toggled", () => {
+					const pos = list_item.get_position()
+					if (pos === Gtk.INVALID_LIST_POSITION) return
+					GObject.signal_handler_block(check, handler_id)
+					if (check.active) {
+						this._selection_model.select_item(pos, false)
+					} else {
+						this._selection_model.unselect_item(pos)
+					}
+					GObject.signal_handler_unblock(check, handler_id)
+				})
+				this.#handler_ids.set(check, handler_id)
+				return check
+			},
+			bind: (check, _pkg, item) => {
+				const pos = item.get_position()
+				const handler_id = this.#handler_ids.get(check)!
+				GObject.signal_handler_block(check, handler_id)
+				check.active = this._selection_model.is_selected(pos)
+				GObject.signal_handler_unblock(check, handler_id)
+				this.#bound_checks.set(pos, check)
+			},
+			unbind: (_check, _pkg, item) => this.#bound_checks.delete(item.get_position()),
+			tear_down: (check) => this.#handler_ids.delete(check),
+		}))
+		this._name_column.set_factory(make_signal_factory(Gtk.Inscription, Package, {
+			setup: () => new Gtk.Inscription({
+				text_overflow: Gtk.InscriptionOverflow.ELLIPSIZE_MIDDLE,
+				min_chars: 10,
+				nat_chars: 30,
+				hexpand: true,
+				margin_top: 4,
+				margin_bottom: 4,
+			}),
+			bind: (inscription, pkg) => inscription.text = pkg.name,
+			unbind: (inscription) => inscription.text = "",
+		}))
+		this._version_column.set_factory(make_signal_factory(Gtk.Inscription, Package, {
+			setup: () => new Gtk.Inscription({
+				text_overflow: Gtk.InscriptionOverflow.ELLIPSIZE_END,
+				min_chars: 10,
+				nat_chars: 15,
+			}),
+			bind: (inscription, pkg) => inscription.text = pkg.version,
+			unbind: (inscription) => inscription.text = "",
+		}))
+		this._arch_column.set_factory(make_signal_factory(Gtk.Inscription, Package, {
+			setup: () => new Gtk.Inscription({
+				text_overflow: Gtk.InscriptionOverflow.ELLIPSIZE_END,
+				min_chars: 6,
+				nat_chars: 10,
+			}),
+			bind: (inscription, pkg) => inscription.text = pkg.arch,
+			unbind: (inscription) => inscription.text = "",
+		}))
+		this._repo_column.set_factory(make_signal_factory(Gtk.Inscription, Package, {
+			setup: () => new Gtk.Inscription({
+				text_overflow: Gtk.InscriptionOverflow.ELLIPSIZE_END,
+				min_chars: 10,
+				nat_chars: 15,
+			}),
+			bind: (inscription, pkg) => inscription.text = pkg.repoid,
+			unbind: (inscription) => inscription.text = "",
+		}))
+		this._installed_column.set_factory(make_signal_factory(Gtk.Image, Package, {
+			setup: () => new Gtk.Image({ icon_name: "archive-symbolic" }),
+			bind: (image, pkg) => image.visible = pkg.installed,
+			unbind: (image) => image.visible = false,
+		}))
 
 		this._column_view.sort_by_column(this._installed_column, Gtk.SortType.ASCENDING)
 		await Package.load_packages(this._packages)
@@ -82,50 +164,6 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 		} else {
 			this._selection_model.select_item(index, false)
 		}
-	}
-
-	protected _on_row_factory_setup(__: Gtk.SignalListItemFactory, row: Gtk.ColumnViewRow): void {
-		row.connect("notify::selected", () => {
-			const selected = row.selected
-			print(`Pckage '${(row.item as Package).name}' is now ${selected ? "selected" : "unselected"}`)
-		})
-	}
-
-	protected _on_selected_column_setup(__: Gtk.SignalListItemFactory, item: Gtk.ListItem): void {
-		const check = new Gtk.CheckButton({ halign: Gtk.Align.CENTER })
-		item.set_child(check)
-
-		const handler_id = check.connect("toggled", () => {
-			const pos = item.get_position()
-			if (pos === Gtk.INVALID_LIST_POSITION) return
-			GObject.signal_handler_block(check, handler_id)
-			if (check.active) {
-				this._selection_model.select_item(pos, false)
-			} else {
-				this._selection_model.unselect_item(pos)
-			}
-			GObject.signal_handler_unblock(check, handler_id)
-		})
-		this.#handler_ids.set(check, handler_id)
-	}
-
-	protected _on_selected_column_bind(__: Gtk.SignalListItemFactory, item: Gtk.ListItem): void {
-		const check = item.get_child() as Gtk.CheckButton
-		const pos = item.get_position()
-		const handler_id = this.#handler_ids.get(check)!
-		GObject.signal_handler_block(check, handler_id)
-		check.active = this._selection_model.is_selected(pos)
-		GObject.signal_handler_unblock(check, handler_id)
-		this.#bound_checks.set(pos, check)
-	}
-
-	protected _on_selected_column_unbind(__: Gtk.SignalListItemFactory, item: Gtk.ListItem): void {
-		this.#bound_checks.delete(item.get_position())
-	}
-
-	protected _on_selected_column_teardown(__: Gtk.SignalListItemFactory, item: Gtk.ListItem): void {
-		const check = item.get_child() as Gtk.CheckButton
-		this.#handler_ids.delete(check)
 	}
 
 	protected _on_selection_changed(_model: Gtk.MultiSelection<Package>, position: number, n_items: number): void {

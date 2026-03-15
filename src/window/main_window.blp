@@ -86,42 +86,11 @@ template $MainWindow: Adw.ApplicationWindow {
 							"styled-list",
 						]
 
-						row-factory: SignalListItemFactory {
-							setup => $_on_row_factory_setup();
-						};
-
-						ColumnViewColumn selected_column {
-							factory: SignalListItemFactory {
-								setup => $_on_selected_column_setup();
-								bind => $_on_selected_column_bind();
-								unbind => $_on_selected_column_unbind();
-								teardown => $_on_selected_column_teardown();
-							};
-						}
+						ColumnViewColumn selected_column {}
 
 						ColumnViewColumn name_column {
 							title: _("Name");
 							expand: true;
-
-							factory: BuilderListItemFactory {
-								template ListItem {
-									child: $RightClickContainer {
-										action-name: "win.pkg_right_clicked";
-										action-target: bind template.position;
-
-										child: Inscription {
-											text: bind template.item as <$Package>.name;
-											text-overflow: ellipsize_middle;
-											min-chars: 10;
-											nat-chars: 30;
-											hexpand: true;
-											margin-top: 4;
-											margin-bottom: 4;
-										};
-									};
-								}
-							};
-
 							sorter: StringSorter {
 								expression: expr item as <$Package>.name;
 							};
@@ -129,23 +98,6 @@ template $MainWindow: Adw.ApplicationWindow {
 
 						ColumnViewColumn version_column {
 							title: _("Version");
-
-							factory: BuilderListItemFactory {
-								template ListItem {
-									child: $RightClickContainer {
-										action-name: "win.pkg_right_clicked";
-										action-target: bind template.position;
-
-										child: Inscription {
-											text: bind template.item as <$Package>.version;
-											text-overflow: ellipsize_end;
-											min-chars: 10;
-											nat-chars: 15;
-										};
-									};
-								}
-							};
-
 							sorter: StringSorter {
 								expression: expr item as <$Package>.version;
 							};
@@ -153,23 +105,6 @@ template $MainWindow: Adw.ApplicationWindow {
 
 						ColumnViewColumn arch_column {
 							title: _("Arch");
-
-							factory: BuilderListItemFactory {
-								template ListItem {
-									child: $RightClickContainer {
-										action-name: "win.pkg_right_clicked";
-										action-target: bind template.position;
-
-										child: Inscription {
-											text: bind template.item as <$Package>.arch;
-											text-overflow: ellipsize_end;
-											min-chars: 6;
-											nat-chars: 10;
-										};
-									};
-								}
-							};
-
 							sorter: StringSorter {
 								expression: expr item as <$Package>.arch;
 							};
@@ -177,23 +112,6 @@ template $MainWindow: Adw.ApplicationWindow {
 
 						ColumnViewColumn repo_column {
 							title: _("Repo");
-
-							factory: BuilderListItemFactory {
-								template ListItem {
-									child: $RightClickContainer {
-										action-name: "win.pkg_right_clicked";
-										action-target: bind template.position;
-
-										child: Inscription {
-											text: bind template.item as <$Package>.repoid;
-											text-overflow: ellipsize_end;
-											min-chars: 10;
-											nat-chars: 15;
-										};
-									};
-								}
-							};
-
 							sorter: StringSorter {
 								expression: expr item as <$Package>.repoid;
 							};
@@ -201,21 +119,6 @@ template $MainWindow: Adw.ApplicationWindow {
 
 						ColumnViewColumn installed_column {
 							title: _("Installed");
-
-							factory: BuilderListItemFactory {
-								template ListItem {
-									child: $RightClickContainer {
-										action-name: "win.pkg_right_clicked";
-										action-target: bind template.position;
-
-										child: Image {
-											icon-name: "archive-symbolic";
-											visible: bind template.item as <$Package>.installed;
-										};
-									};
-								}
-							};
-
 							sorter: NumericSorter {
 								expression: expr item as <$Package>.installed;
 								sort-order: descending;
