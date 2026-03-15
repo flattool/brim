@@ -3,34 +3,42 @@ import Gtk from "gi://Gtk?version=4.0"
 import Adw from "gi://Adw?version=1"
 import Pango from "gi://Pango?version=1.0"
 
-import { GClass, Property, Child, from, Debounce } from "../gobjectify/gobjectify.js"
+import { GClass, SimpleAction, Property, Child, from, OnSimpleAction } from "../gobjectify/gobjectify.js"
 import { SharedVars } from "../utils/shared_vars.js"
 import { Package } from "../dnf.js"
 import { ListStore } from "../list_store.js"
-import { chunked_idler } from "../utils/helper_funcs.js"
 
 import "../details_page/details_page.js"
+import GObject from "gi://GObject?version=2.0"
+import GLib from "gi://GLib?version=2.0"
+
+GLib.Variant.new_uint32
 
 @GClass({ template: "resource:///io/github/flattool/Brim/window/main_window.ui" })
 export class MainWindow extends from(Adw.ApplicationWindow, {
 	search_text: Property.string(),
 	is_loading: Property.bool({ default: true }),
+	pkg_right_clicked: SimpleAction({ parameter_type: new GLib.VariantType("u") }),
 	_packages: Child<ListStore<Package>>(),
-	_selected_packages: Child<ListStore<Package>>(),
 	_column_view: Child<Gtk.ColumnView>(),
-	_selection_model: Child<Gtk.MultiSelection>(),
+	_selection_model: Child<Gtk.MultiSelection<Package>>(),
 	_name_column: Child<Gtk.ColumnViewColumn>(),
 	_installed_column: Child<Gtk.ColumnViewColumn>(),
 	_toast_overlay: Child<Adw.ToastOverlay>(),
 }) {
 	readonly #settings = new Gio.Settings({ schema_id: pkg.app_id })
+	readonly #handler_ids = new WeakMap<Gtk.CheckButton, number>()
+	readonly #bound_checks = new Map<number, Gtk.CheckButton>()
 
 	async _ready(): Promise<void> {
 		if (pkg.profile === "development") this.add_css_class("devel")
 		print(`Welcome to ${pkg.app_id}!`)
 
-		this.connect("close-request", () => this._column_view.set_model(null))
-		this._selected_packages.connect("items-changed", () => print(this._selected_packages.length))
+		this.connect("close-request", () => {
+			this._packages.remove_all()
+			this._name_column.set_factory(null)
+			this._column_view.set_model(null)
+		})
 
 		this._column_view.sort_by_column(this._installed_column, Gtk.SortType.ASCENDING)
 		await Package.load_packages(this._packages)
@@ -66,23 +74,71 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 		print("=====================")
 	}
 
-	#selection_changed_token?: {}
-
-	protected async _on_selection_changed(selection_model: Gtk.MultiSelection<Package>): Promise<void> {
-		const bitset = this._selection_model.get_selection()
-		const selected: Package[] = []
-		const token = {}
-		this.#selection_changed_token = token
-		const idler = chunked_idler()
-		for (let nth = 0; nth < bitset.get_size(); nth += 1) {
-			const position = bitset.get_nth(nth)
-			const item = selection_model.get_item(position)!
-			selected.push(item)
-			await idler()
-			if (this.#selection_changed_token !== token) return
+	@OnSimpleAction("pkg_right_clicked")
+	#on_pkg_right_clicked(_action: Gio.SimpleAction, param: GLib.Variant): void {
+		const index = param.get_uint32()
+		if (this._selection_model.is_selected(index)) {
+			this._selection_model.unselect_item(index)
+		} else {
+			this._selection_model.select_item(index, false)
 		}
-		if (this.#selection_changed_token !== token) return
-		this._selected_packages.swap_contents(selected)
+	}
+
+	protected _on_row_factory_setup(__: Gtk.SignalListItemFactory, row: Gtk.ColumnViewRow): void {
+		row.connect("notify::selected", () => {
+			const selected = row.selected
+			print(`Pckage '${(row.item as Package).name}' is now ${selected ? "selected" : "unselected"}`)
+		})
+	}
+
+	protected _on_selected_column_setup(__: Gtk.SignalListItemFactory, item: Gtk.ListItem): void {
+		const check = new Gtk.CheckButton({ halign: Gtk.Align.CENTER })
+		item.set_child(check)
+
+		const handler_id = check.connect("toggled", () => {
+			const pos = item.get_position()
+			if (pos === Gtk.INVALID_LIST_POSITION) return
+			GObject.signal_handler_block(check, handler_id)
+			if (check.active) {
+				this._selection_model.select_item(pos, false)
+			} else {
+				this._selection_model.unselect_item(pos)
+			}
+			GObject.signal_handler_unblock(check, handler_id)
+		})
+		this.#handler_ids.set(check, handler_id)
+	}
+
+	protected _on_selected_column_bind(__: Gtk.SignalListItemFactory, item: Gtk.ListItem): void {
+		const check = item.get_child() as Gtk.CheckButton
+		const pos = item.get_position()
+		const handler_id = this.#handler_ids.get(check)!
+		GObject.signal_handler_block(check, handler_id)
+		check.active = this._selection_model.is_selected(pos)
+		GObject.signal_handler_unblock(check, handler_id)
+		this.#bound_checks.set(pos, check)
+	}
+
+	protected _on_selected_column_unbind(__: Gtk.SignalListItemFactory, item: Gtk.ListItem): void {
+		this.#bound_checks.delete(item.get_position())
+	}
+
+	protected _on_selected_column_teardown(__: Gtk.SignalListItemFactory, item: Gtk.ListItem): void {
+		const check = item.get_child() as Gtk.CheckButton
+		this.#handler_ids.delete(check)
+	}
+
+	protected _on_selection_changed(_model: Gtk.MultiSelection<Package>, position: number, n_items: number): void {
+		const end = position + n_items
+		for (let pos = position; pos < end; pos += 1) {
+			const check = this.#bound_checks.get(pos)
+			if (!check) continue
+			const handler_id = this.#handler_ids.get(check)!
+			GObject.signal_handler_block(check, handler_id)
+			const is_selected = this._selection_model.is_selected(pos)
+			check.active = is_selected
+			GObject.signal_handler_unblock(check, handler_id)
+		}
 	}
 
 	protected _on_search_changed(entry: Gtk.SearchEntry): void {
@@ -91,5 +147,18 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 
 	protected _show_spinner(__: this, is_loading: boolean, pending_sorts: number): boolean {
 		return is_loading || pending_sorts > 0
+	}
+}
+
+void @GClass() class RightClickContainer extends from(Adw.Bin, {
+	action_name: Property.string(),
+	action_target: Property.uint32(),
+}) {
+	_ready(): void {
+		const gesture = new Gtk.GestureClick({ button: 3 })
+		gesture.connect("pressed", () => {
+			this.activate_action(this.action_name, GLib.Variant.new_uint32(this.action_target))
+		})
+		this.get_parent()?.add_controller(gesture)
 	}
 }

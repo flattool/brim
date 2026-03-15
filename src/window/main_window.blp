@@ -3,8 +3,6 @@ using Adw 1;
 
 $ListStore packages {}
 
-$ListStore selected_packages {}
-
 FilterListModel filtered_packages {
 	filter: StringFilter {
 		search: bind template.search_text;
@@ -72,6 +70,7 @@ template $MainWindow: Adw.ApplicationWindow {
 				content: ScrolledWindow {
 					child: ColumnView column_view {
 						enable-rubberband: true;
+						tab-behavior: cell;
 
 						model: MultiSelection selection_model {
 							model: SortListModel sort_model {
@@ -87,20 +86,38 @@ template $MainWindow: Adw.ApplicationWindow {
 							"styled-list",
 						]
 
+						row-factory: SignalListItemFactory {
+							setup => $_on_row_factory_setup();
+						};
+
+						ColumnViewColumn selected_column {
+							factory: SignalListItemFactory {
+								setup => $_on_selected_column_setup();
+								bind => $_on_selected_column_bind();
+								unbind => $_on_selected_column_unbind();
+								teardown => $_on_selected_column_teardown();
+							};
+						}
+
 						ColumnViewColumn name_column {
 							title: _("Name");
 							expand: true;
 
 							factory: BuilderListItemFactory {
 								template ListItem {
-									child: Inscription {
-										text: bind template.item as <$Package>.name;
-										text-overflow: ellipsize_middle;
-										min-chars: 10;
-										nat-chars: 30;
-										hexpand: true;
-										margin-top: 4;
-										margin-bottom: 4;
+									child: $RightClickContainer {
+										action-name: "win.pkg_right_clicked";
+										action-target: bind template.position;
+
+										child: Inscription {
+											text: bind template.item as <$Package>.name;
+											text-overflow: ellipsize_middle;
+											min-chars: 10;
+											nat-chars: 30;
+											hexpand: true;
+											margin-top: 4;
+											margin-bottom: 4;
+										};
 									};
 								}
 							};
@@ -115,11 +132,16 @@ template $MainWindow: Adw.ApplicationWindow {
 
 							factory: BuilderListItemFactory {
 								template ListItem {
-									child: Inscription {
-										text: bind template.item as <$Package>.version;
-										text-overflow: ellipsize_end;
-										min-chars: 10;
-										nat-chars: 15;
+									child: $RightClickContainer {
+										action-name: "win.pkg_right_clicked";
+										action-target: bind template.position;
+
+										child: Inscription {
+											text: bind template.item as <$Package>.version;
+											text-overflow: ellipsize_end;
+											min-chars: 10;
+											nat-chars: 15;
+										};
 									};
 								}
 							};
@@ -134,11 +156,16 @@ template $MainWindow: Adw.ApplicationWindow {
 
 							factory: BuilderListItemFactory {
 								template ListItem {
-									child: Inscription {
-										text: bind template.item as <$Package>.arch;
-										text-overflow: ellipsize_end;
-										min-chars: 6;
-										nat-chars: 10;
+									child: $RightClickContainer {
+										action-name: "win.pkg_right_clicked";
+										action-target: bind template.position;
+
+										child: Inscription {
+											text: bind template.item as <$Package>.arch;
+											text-overflow: ellipsize_end;
+											min-chars: 6;
+											nat-chars: 10;
+										};
 									};
 								}
 							};
@@ -153,11 +180,16 @@ template $MainWindow: Adw.ApplicationWindow {
 
 							factory: BuilderListItemFactory {
 								template ListItem {
-									child: Inscription {
-										text: bind template.item as <$Package>.repoid;
-										text-overflow: ellipsize_end;
-										min-chars: 10;
-										nat-chars: 15;
+									child: $RightClickContainer {
+										action-name: "win.pkg_right_clicked";
+										action-target: bind template.position;
+
+										child: Inscription {
+											text: bind template.item as <$Package>.repoid;
+											text-overflow: ellipsize_end;
+											min-chars: 10;
+											nat-chars: 15;
+										};
 									};
 								}
 							};
@@ -172,9 +204,14 @@ template $MainWindow: Adw.ApplicationWindow {
 
 							factory: BuilderListItemFactory {
 								template ListItem {
-									child: Image {
-										icon-name: "archive-symbolic";
-										visible: bind template.item as <$Package>.installed;
+									child: $RightClickContainer {
+										action-name: "win.pkg_right_clicked";
+										action-target: bind template.position;
+
+										child: Image {
+											icon-name: "archive-symbolic";
+											visible: bind template.item as <$Package>.installed;
+										};
 									};
 								}
 							};
