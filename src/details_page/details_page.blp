@@ -4,32 +4,45 @@ using Adw 1;
 template $DetailsPage: Adw.NavigationPage {
 	title: _("Details");
 
-	notify::pkg => $_on_pkg_changed();
-
 	child: Adw.ToolbarView {
 		[top]
 		Adw.HeaderBar {}
 
-		content: ScrolledWindow {
-			child: Adw.Clamp {
-				child: Box {
-					orientation: vertical;
-					spacing: 12;
+		content: Stack stack {
+			visible-child-name: bind template.visible_page_name;
 
-					Label {
-						label: bind template.pkg as <$Package>.name;
-						wrap: true;
-						wrap-mode: word_char;
-						styles ["title-2"]
-					}
+			StackPage {
+				name: "none-selected";
+				child: Adw.StatusPage {
+					title: _("No Package Selected");
+					description: _("Select a package to view its details.");
+				};
+			}
 
-					Label {
-						label: bind template.summary;
-						wrap: true;
-						wrap-mode: word_char;
+			StackPage {
+				name: "many-selected";
+				child: Adw.StatusPage {
+					title: _("Multiple Packages Selected");
+					description: _("Select a single package to view its details.");
+				};
+			}
+
+			StackPage {
+				name: "single-selected";
+				child: Adw.PreferencesPage {
+					Adw.PreferencesGroup {
+						title: _("Details Placeholder");
+						description: _("This is where the details of the selected package will be displayed.");
+
+						Adw.ActionRow {
+							title: _("Name");
+							subtitle: bind template.package_name;
+
+							styles ["property"]
+						}
 					}
 				};
-			};
+			}
 		};
 	};
 }

@@ -40,7 +40,7 @@ export const make_signal_factory = <Widget extends Gtk.Widget, Data extends GObj
 	callbacks: {
 		readonly setup: (item: Gtk.ListItem)=> Widget,
 		readonly bind: (widget: Widget, data: Data, item: Gtk.ListItem)=> void,
-		readonly unbind: (widget: Widget, data: Data, item: Gtk.ListItem)=> void,
+		readonly unbind?: (widget: Widget, data: Data, item: Gtk.ListItem)=> void,
 		readonly tear_down?: (widget: Widget)=> void,
 	},
 ): Gtk.SignalListItemFactory => {
@@ -52,7 +52,7 @@ export const make_signal_factory = <Widget extends Gtk.Widget, Data extends GObj
 		list_item.item as Data,
 		list_item,
 	))
-	factory.connect("unbind", (__, list_item: Gtk.ListItem) => callbacks.unbind(
+	factory.connect("unbind", (__, list_item: Gtk.ListItem) => callbacks.unbind?.(
 		list_item.get_child() as Widget,
 		list_item.item as Data,
 		list_item,

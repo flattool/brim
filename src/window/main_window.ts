@@ -9,7 +9,7 @@ import { Package } from "../dnf.js"
 import { ListStore } from "../list_store.js"
 import { make_signal_factory } from "../utils/helper_funcs.js"
 
-import "../details_page/details_page.js"
+import { DetailsPage } from "../details_page/details_page.js"
 import GObject from "gi://GObject?version=2.0"
 import GLib from "gi://GLib?version=2.0"
 
@@ -29,6 +29,7 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 	_repo_column: Child<Gtk.ColumnViewColumn>(),
 	_installed_column: Child<Gtk.ColumnViewColumn>(),
 	_toast_overlay: Child<Adw.ToastOverlay>(),
+	_details_page: Child<DetailsPage>(),
 }) {
 	readonly #settings = new Gio.Settings({ schema_id: pkg.app_id })
 	readonly #handler_ids = new WeakMap<Gtk.CheckButton, number>()
@@ -177,6 +178,9 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 			check.active = is_selected
 			GObject.signal_handler_unblock(check, handler_id)
 		}
+		const bitset = this._selection_model.get_selection()
+		const first = bitset.get_nth(0)
+		this._details_page.selection_changed(this._selection_model.vfunc_get_item(first), bitset.get_size())
 	}
 
 	protected _on_search_changed(entry: Gtk.SearchEntry): void {

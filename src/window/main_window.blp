@@ -82,9 +82,7 @@ template $MainWindow: Adw.ApplicationWindow {
 							selection-changed => $_on_selection_changed();
 						};
 
-						styles [
-							"styled-list",
-						]
+						styles ["styled-list"]
 
 						ColumnViewColumn selected_column {}
 
@@ -128,9 +126,7 @@ template $MainWindow: Adw.ApplicationWindow {
 				};
 			};
 
-			sidebar: $DetailsPage details_page {
-				// pkg: bind selection_model.selected-item;
-			};
+			sidebar: $DetailsPage details_page {};
 		};
 	};
 }
