@@ -18,14 +18,12 @@
 	border-radius: 11px;
 }
 
-/* .styled-list row {
-	border-radius: 11px;
-	margin: 3px 0px 3px 0px;
+.styled-list row > cell > * {
+	margin-top: -8px;
+	margin-bottom: -8px;
+	padding-top: 11px;
+	padding-bottom: 11px;
 }
-
-.styled-list row:last-child {
-	margin-bottom: 15px;
-} */
 
 .styled-list button:first-child {
 	border-radius: 9px 0px 0px 0px;

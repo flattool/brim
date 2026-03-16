@@ -80,12 +80,13 @@ export class MainWindow extends from(Adw.ApplicationWindow, {
 		}))
 		this._name_column.set_factory(make_signal_factory(Gtk.Inscription, Package, {
 			setup: () => new Gtk.Inscription({
+				text: "Hello, World!",
 				text_overflow: Gtk.InscriptionOverflow.ELLIPSIZE_MIDDLE,
 				min_chars: 10,
 				nat_chars: 30,
 				hexpand: true,
-				margin_top: 4,
-				margin_bottom: 4,
+				valign: Gtk.Align.FILL,
+				vexpand: true,
 			}),
 			bind: (inscription, pkg) => inscription.text = pkg.name,
 			unbind: (inscription) => inscription.text = "",
